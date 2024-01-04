@@ -26,6 +26,11 @@ public class Skills : ScriptableObject
     public delegate void EnergyChanged(float newEnergy);
     public event EnergyChanged OnEnergy;
 
+    // Hunger.
+    public float hunger = 100.0f; // Starting at 100%
+    public delegate void HungerChanged(float newHunger);
+    public event HungerChanged OnHunger;
+
     public void IncreaseFocus()
     {
         focus = Mathf.Min(focus + 5.0f, 100.0f); // Increase focus by 5%, up to maximum.
@@ -67,6 +72,12 @@ public class Skills : ScriptableObject
         OnEnergy?.Invoke(energy);
         Debug.Log("Energy after reset: " + energy);
     }
+
+    public void ResetHunger()
+    {
+        hunger = 100.0f;
+        OnHunger?.Invoke(hunger);
+    }
     public void DecreaseFocus()
     {
         focus = Mathf.Max(focus - 2.0f, 0.0f); // Decrease focus by 2% per day, down to minimum.
@@ -89,6 +100,12 @@ public class Skills : ScriptableObject
     {
         energy = Mathf.Max(energy - amount, 0.0f);
         OnEnergy?.Invoke(energy);
+    }
+
+    public void DecreaseHunger(float amount)
+    {
+        hunger = Mathf.Max(hunger - amount, 0.0f);
+        OnHunger?.Invoke(hunger);
     }
     // Start is called before the first frame update
     void Start()

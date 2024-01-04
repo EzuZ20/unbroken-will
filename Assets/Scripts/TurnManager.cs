@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using TMPro; // TextMeshPro 
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,15 +14,17 @@ public class TurnManager : MonoBehaviour
     public string[] morningNewsTexts;
     public string[] eveningNewsTexts;
 
-    public TextMeshProUGUI dialogueBox;
+    public TextMeshProUGUI dialogueBox; // Change to dateText
     public TextMeshProUGUI timeOfDayText;
     public TextMeshProUGUI focusPercentageText;
     public TextMeshProUGUI strengthPercentageText;
     public TextMeshProUGUI staminaPercentageText;
     public TextMeshProUGUI newsDialogueBox;
     public TextMeshProUGUI energyPercentageText;
+    public TextMeshProUGUI hungerPercentageText;
 
     public Skills playerSkills;
+    public InventoryManager inventoryManager;
 
     public Button sleepButton;
     public Button readButton;
@@ -32,7 +34,10 @@ public class TurnManager : MonoBehaviour
 
     public DayCycleManager dayCycleManager;
 
-
+    public int GetCurrentDay()
+    {
+        return currentDay;
+    }
     public void AdvanceDay()
     {
         currentDay++;
@@ -45,17 +50,19 @@ public class TurnManager : MonoBehaviour
         {
             dialogueBox.text = "Work in progress.";
         }
-        currentTimeOfDay = 0;
+        currentTimeOfDay = 0; // After sleep set time of day to morning.
         timeOfDayText.text = timeOfDayTexts[currentTimeOfDay];
         dayCycleManager.UpdateLighting(currentTimeOfDay);
         sleepButton.interactable = false;
         playerSkills.DecreaseFocus();
         playerSkills.DecreaseStrength();
         playerSkills.DecreaseStamina();
+        playerSkills.DecreaseHunger(30);
         UpdateFocusUI(playerSkills.focus);
         UpdateStrengthUI(playerSkills.strength);
         UpdateStaminaUI(playerSkills.stamina);
         UpdateEnergyUI(playerSkills.energy);
+        UpdateHungerUI(playerSkills.hunger);
 
         jogButton.interactable = true;
         exerciseButton.interactable = true;
@@ -88,7 +95,6 @@ public class TurnManager : MonoBehaviour
             jogButton.interactable = false;
             exerciseButton.interactable = false;
             readButton.interactable = false;
-            
         }
 
     }
@@ -106,14 +112,20 @@ public class TurnManager : MonoBehaviour
         UpdateEnergyUI(playerSkills.energy);
     }
 
+    public void OnEatBreadButtonPressed()
+    {
+        inventoryManager.EatBread();
+    }
     public void ReadBook()
     {
         if (playerSkills.energy > 0)
         {
             playerSkills.IncreaseFocus();
-            playerSkills.DecreaseEnergy(10); // Current energy cost for reading - 10 units.
+            playerSkills.DecreaseEnergy(10); // Current energy cost for reading - 10 percents.
+            playerSkills.DecreaseHunger(5);
             UpdateFocusUI(playerSkills.focus);
             UpdateEnergyUI(playerSkills.energy);
+            UpdateHungerUI(playerSkills.hunger);
             AdvanceTimeOfDay(); // Move to the next time of day when "Read" is clicked.
         }
         
@@ -126,12 +138,13 @@ public class TurnManager : MonoBehaviour
             playerSkills.IncreaseStrength();
             playerSkills.IncreaseStamina();
             playerSkills.DecreaseEnergy(25); // Current energy cost for exercising - 25 units.
+            playerSkills.DecreaseHunger(20);
             UpdateStrengthUI(playerSkills.strength);
             UpdateStaminaUI(playerSkills.stamina);
             UpdateEnergyUI(playerSkills.energy);
+            UpdateHungerUI(playerSkills.hunger);
             AdvanceTimeOfDay();
         }    
-        
     }
 
     public void Jog()
@@ -142,19 +155,19 @@ public class TurnManager : MonoBehaviour
             playerSkills.IncreaseStaminaPlus();
             playerSkills.IncreaseFocusMinus();
             playerSkills.DecreaseEnergy(20); // Current energy cost for jogging - 20 units.
+            playerSkills.DecreaseHunger(15);
             UpdateStaminaUI(playerSkills.stamina);
             UpdateFocusUI(playerSkills.focus);
             UpdateEnergyUI(playerSkills.energy);
+            UpdateHungerUI(playerSkills.hunger);
             AdvanceTimeOfDay();
         }
-        
     }
 
     private void UpdateFocusUI(float newFocus)
     {
         float progress = newFocus / 100.0f;
         focusPercentageText.text = "Focus: " + newFocus.ToString("F0") + "%";
-
     }
 
     private void UpdateStrengthUI(float newStrength)
@@ -173,6 +186,12 @@ public class TurnManager : MonoBehaviour
     {
         float progress = newEnergy / 100.0f;
         energyPercentageText.text = "Energy: " + newEnergy.ToString("F0") + "%";
+    }
+
+    private void UpdateHungerUI(float newHunger)
+    {
+        float progress = newHunger / 100.0f;
+        hungerPercentageText.text = "Hunger: " + newHunger.ToString("F0") + "%";
     }
 
     public void ReadNews()
@@ -194,17 +213,19 @@ public class TurnManager : MonoBehaviour
     {
         // Set the sleep button to non-interactable if it's not evening
         sleepButton.interactable = (currentTimeOfDay == timeOfDayTexts.Length - 1);
-        playerSkills = ScriptableObject.CreateInstance<Skills>();
+        playerSkills = ScriptableObject.CreateInstance<Skills>(); // Try deleting this line.
         //playerSkills = Skills.Instance;
         playerSkills.OnFocus += UpdateFocusUI;
         playerSkills.OnStrength += UpdateStrengthUI;
         playerSkills.OnStamina += UpdateStaminaUI;
         playerSkills.OnEnergy += UpdateEnergyUI;
+        playerSkills.OnHunger += UpdateHungerUI;
         UpdateFocusUI(playerSkills.focus);
         UpdateStrengthUI(playerSkills.strength);
         UpdateStaminaUI(playerSkills.stamina);
         UpdateEnergyUI(playerSkills.energy);
-        readNewsButton.onClick.AddListener(ReadNews);
+        UpdateHungerUI(playerSkills.hunger);
+        readNewsButton.onClick.AddListener(ReadNews); // Try moving to Update.
     }
 
     // Update is called once per frame
@@ -219,7 +240,6 @@ public class TurnManager : MonoBehaviour
         playerSkills.OnStrength += UpdateStrengthUI;
         playerSkills.OnStamina += UpdateStaminaUI;
         playerSkills.OnEnergy += UpdateEnergyUI;
+        playerSkills.OnHunger += UpdateHungerUI;
     }
-
-   
 }
