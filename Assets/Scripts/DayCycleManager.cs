@@ -6,6 +6,7 @@ public class DayCycleManager : MonoBehaviour
 {
 
     public Light directionalLight;
+    public Material skyboxMaterial;
     public Color morningColor;
     public Color afternoonColor;
     public Color eveningColor;
@@ -16,6 +17,7 @@ public class DayCycleManager : MonoBehaviour
     {
         // Set initial light color.
         directionalLight.color = morningColor;
+        skyboxMaterial.SetColor("_Tint", morningColor);
     }
 
     // Update is called once per frame
@@ -25,27 +27,30 @@ public class DayCycleManager : MonoBehaviour
 
         if (timeOfDay == 0) // Early Morning.
         {
-            StartCoroutine(TransitionLightColor(directionalLight.color, morningColor, transitionDuration));
+            StartCoroutine(TransitionLightAndSkyboxColor(directionalLight.color, morningColor, transitionDuration));
         }
         else if (timeOfDay == 1) // Afternoon.
         {
-            StartCoroutine(TransitionLightColor(directionalLight.color, afternoonColor, transitionDuration));
+            StartCoroutine(TransitionLightAndSkyboxColor(directionalLight.color, afternoonColor, transitionDuration));
         }
         else if (timeOfDay == 2) // Evening.
         {
-            StartCoroutine(TransitionLightColor(directionalLight.color, eveningColor, transitionDuration));
+            StartCoroutine(TransitionLightAndSkyboxColor(directionalLight.color, eveningColor, transitionDuration));
         }
     }
 
-    private IEnumerator TransitionLightColor(Color startColor, Color endColor, float duration)
+    private IEnumerator TransitionLightAndSkyboxColor(Color startColor, Color endColor, float duration)
     {
         float time = 0;
         while (time < duration)
         {
-            directionalLight.color = Color.Lerp(startColor, endColor, time / duration);
+            Color currentColor = Color.Lerp(startColor, endColor, time / duration);
+            directionalLight.color = currentColor;
+            skyboxMaterial.SetColor("_Tint", currentColor);
             time += Time.deltaTime;
             yield return null;
         }
         directionalLight.color = endColor;
+        skyboxMaterial.SetColor("_Tint", endColor);
     }
 }
